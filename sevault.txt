@@ -1,0 +1,172 @@
+// créer la base meslcients
+// use mesclients
+
+// montrer les bases
+// db
+
+// creer un user
+db.createUser({
+  user: "ben",
+  pwd: "ben",
+  roles: [
+    { role: "readWrite", db: "mesclients" }
+  ]
+})
+
+// modifier un user existant
+db.updateUser(
+  "ben",
+  {
+    roles: [
+      { role: "dbAdmin", db: "mesclients" },
+      { role: "readWrite", db: "mesclients" }
+    ]
+  }
+)
+
+// creer une collection
+db.createCollection("clients")
+
+// inserer des documents dans la collection clients
+const doc = { nom: "Mac lane", prenom: "John", tel: "12346578" }
+db.clients.insertOne(doc)
+
+const docs = [
+  { nom: "S.", prenom: "Ben", tel: "42.03.14.17.07" },
+  { nom: "Dufour", prenom: "Alain", tel: "4455667788", societe: "Aaltra", niveau: 10 }
+]
+db.clients.insertMany(docs)
+
+const testInsert = { nom: "Toto", prenom: "Jean", tel: "42.03.14.17.07", type: "test" }
+db.clients.insert(testInsert)
+
+
+// voir les docs d'une collection
+db.clients.find()
+
+// modifier les données d'un doc
+db.clients.updateOne(
+  { nom: "Mac lane" },
+  { $set: { societe: "Microsoft" } }
+)
+
+// supprimer une donnée
+db.clients.updateOne(
+  { nom: "Dufour" },
+  { $unset: { niveau: null } }
+)
+
+db.clients.updateOne(
+  { nom: "Dufour" },
+  { $set: { societe: "company" } }
+)
+
+// filtrer des données
+db.clients.find(
+  {},
+  { nom: 1, tel: 1 }
+)
+
+db.clients.find(
+  {
+    $or: [
+      { nom: "Mac Lane" },
+      { societe: "Aaltra" }
+    ]
+  }
+)
+
+db.clients.find(
+  {
+    $or: [
+      { nom: "Mac Lane" },
+      { societe: "company" }
+    ]
+  }
+)
+
+// trier les données selon un champ : 1 => asc, -1 desc
+db.clients.find().sort({ nom: 1 })
+
+// importer une collection via CLI
+mongoimport --db new_york --collection restaurants --username root --password root --authenticationDatabase admin /app/restaurants.json
+
+///////////////////////////
+// Exo 6
+///////////////////////////
+db.restaurants.find({ borough: "Manhattan", cuisine: /American/, "address.zipcode": "10025" }).limit(5)
+
+db.restaurants.find({ borough: "Manhattan", cuisine: /American/, "address.zipcode": "10025" }).count() // count: 51
+
+db.restaurants.find(
+  {
+    borough: "Manhattan",
+    cuisine: /American/,
+    "address.zipcode": "10025"
+  },
+  {
+    _id: 0,
+    borough: 1,
+    cuisine: 1
+  }
+).limit(5)
+
+db.restaurants.distinct("cuisine").sort()
+
+var totalRestaurants = db.restaurants.count();
+var americanRestaurants = db.restaurants.count({ cuisine: /American/ });
+var percentageAmerican = (americanRestaurants / totalRestaurants) * 100;
+print("Pourcentage de restaurants de type 'American' : " + percentageAmerican.toFixed(2) + "%");
+
+db.restaurants.find({ borough: "Manhattan", cuisine: "Italian" }).count()
+
+// Quels sont les restaurants les mieux cotés à un moment donné
+db.restaurants.aggregate([
+  { $unwind: "$grades" },
+  { $match: { "grades.date": ISODate("2014-09-06"), "grades.grade": "A" } },
+  { $sort: { "grades.score": -1 } },
+  { $limit: 5 }
+])
+
+//ou
+db.restaurants.find(
+  {
+    "grades": {
+      $elemMatch: {
+        date: ISODate("2014-09-06"),
+        grade: "A",
+      }
+    }
+  },
+  {
+    "_id": 0,
+    "grades": {
+      $elemMatch: {
+        date: ISODate("2014-09-06")
+      }
+    }
+  }
+).sort({ "grades.score": -1 }).limit(5)
+
+// ceux avec grades.grade = A  et grades.score au max
+db.restaurants.find(
+  {
+    "grades": {
+      $elemMatch: {
+        grade: "A"
+      }
+    }
+  }
+).sort({ "grades.score": -1 }).limit(5)
+
+
+// Idem mais trouver le plus récemment côté
+db.restaurants.find(
+  {
+    "grades": {
+      $elemMatch: {
+        grade: "A"
+      }
+    }
+  }
+).sort({ "grades.0": -1 }).limit(5)

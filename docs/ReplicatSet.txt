@@ -1,0 +1,42 @@
+# faire en sorte que mongod ne soit plus un service
+mongod --remove
+# regarder la liste des process mongod
+tasklist /FI "IMAGENAME eq mongod.exe"
+# supprimer les mongod eventuels restant
+
+
+# dans le repertoire MongoDB créer les sous répertoires avec un exporateur de fichiers
+data\RS1
+data\RS2
+data\RS3
+  
+# lancer 3 mongod dans 3 cmd differentes
+mongod --replSet myrepl --port 27018 --dbpath ..\data\RS1 –logpath 1.log		dans une cmd
+mongod --replSet myrepl --port 27019 --dbpath ..\data\RS2 –logpath 2.log		dans une autre cmd
+mongod --replSet myrepl --port 27020 --dbpath ..\data\RS3 –logpath 3.log		dans une autre cmd
+
+
+#lancer un client mongo
+mongo --port 27018
+
+rsconf = {
+          _id: "myrepl",
+          members: [
+                     {_id: 0, host: "localhost:27018"},
+                     {_id: 1, host: "localhost:27019"},
+                     {_id: 2, host: "localhost:27020"}
+                   ]
+        };
+rs.initiate (rsconf) ;
+
+# puis regarder l'état avec 
+rs.status()
+
+# pour connecter un client à une machine du réplicaset
+mongo --host myrepl/localhost:27018,localhost:27019,localhost:27020
+
+#pour relancer un serveur simple sur 27017 hors replicaset :
+
+
+
+

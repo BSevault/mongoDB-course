@@ -1,0 +1,21 @@
+version: '3.8'
+name: mongo
+services:
+  server:
+    image: mongo:latest
+    hostname: server
+    container_name: server
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+    - 27017:27017
+    volumes:
+      - db_data:/data/db
+      - db_config:/data/configdb
+      - ./:/app
+
+volumes:
+  db_data:
+  db_config:
